@@ -12,7 +12,7 @@ public class Main {
 
 		// Register our bot
 		try {
-			botsApi.registerBot(new BiciSocialeBot());
+			botsApi.registerBot(new BiciSocialeBot("log.txt"));
 		} catch (TelegramApiException e) {
 			e.printStackTrace();
 		}
