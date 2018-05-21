@@ -56,7 +56,8 @@ public class BiciSocialeBot extends TelegramLongPollingBot {
 				case "/help@BiciSocialeBot":
 					answer = "BiciSocialeBot"
 							+ "\nIf you move the bike please use /update, then send the location as an answer to the message."
-							+ "\nIf you want to find the bike use /find.";
+							+ "\nIf you want to find the bike use /find."
+							+ "\nIf you want to get the bikes' lock combination use /combination.";
 					this.sendMessage(chat_id, answer);
 					break;
 				case "/update":
@@ -67,7 +68,7 @@ public class BiciSocialeBot extends TelegramLongPollingBot {
 					break;
 				case "/combination":
 				case "/combination@BiciSocialeBot":
-					answer = "The bikes' current combination is:\n" + this.bikeCombination;
+					answer = "The bikes' current lock combination is:\n" + this.bikeCombination;
 					this.sendMessage(chat_id, answer);
 					break;
 				case "/find":
