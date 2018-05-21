@@ -22,11 +22,11 @@ import java.util.List;
 
 public class BiciSocialeBot extends TelegramLongPollingBot {
 	private Location bikeLocation;
-	private int bikeCombination;
+	private String bikeCombination;
 	private boolean taken;
 	private String file;
 	
-	public BiciSocialeBot(String logFile, int combination) {
+	public BiciSocialeBot(String logFile, String combination) {
 		this.file = logFile;
 		this.bikeCombination = combination;
 	}
@@ -67,7 +67,7 @@ public class BiciSocialeBot extends TelegramLongPollingBot {
 					break;
 				case "/combination":
 				case "/combination@BiciSocialeBot":
-					answer = Integer.toString(this.bikeCombination);
+					answer = "The bikes' current combination is:\n" + this.bikeCombination;
 					this.sendMessage(chat_id, answer);
 					break;
 				case "/find":
