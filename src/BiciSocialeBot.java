@@ -1,6 +1,7 @@
 import org.telegram.telegrambots.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.api.methods.send.SendLocation;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
+import org.telegram.telegrambots.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.api.objects.CallbackQuery;
 import org.telegram.telegrambots.api.objects.Location;
 import org.telegram.telegrambots.api.objects.Update;
@@ -16,6 +17,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -56,8 +58,9 @@ public class BiciSocialeBot extends TelegramLongPollingBot {
 				case "/help@BiciSocialeBot":
 					answer = "BiciSocialeBot"
 							+ "\nIf you move the bike please use /update, then send the location as an answer to the message."
-							+ "\nIf you want to find the bike use /find."
-							+ "\nIf you want to get the bikes' lock combination use /combination.";
+							+ "\nTo find the bike use /find."
+							+ "\nTo get the bikes' lock combination use /combination."
+							+ "\nUse /cancel at any moment to cancel the current command";
 					this.sendMessage(chat_id, answer);
 					break;
 				case "/update":
@@ -81,6 +84,12 @@ public class BiciSocialeBot extends TelegramLongPollingBot {
 					}
 					
 					break;
+				case "/cancel":
+				case "/cancel@BiciSocialeBot":
+					this.taken = false;
+					answer = "Cancelled all current actions!";
+					this.sendMessage(chat_id, answer);
+					break;
 				default:
 					answer = "No such command.\nUse /help for help.";
 					this.sendMessage(chat_id, answer);
@@ -100,13 +109,15 @@ public class BiciSocialeBot extends TelegramLongPollingBot {
 				
 				log(user_first_name, user_last_name, Long.toString(user_id), message_text, answer);
 			}
-		}
-		
-		if (update.hasCallbackQuery()) {
+		} else if (update.hasCallbackQuery()) {
 			CallbackQuery query = update.getCallbackQuery();
+			long message_id = query.getMessage().getMessageId();
+			long chat_id = query.getMessage().getChatId();
+			
 			if (query.getData().equals("take")) {
 				this.taken = true;
 				this.answerCallback(query.getId(), "Please don't wreck the bike!");
+				// this.editMessage(chat_id, (int) (long) message_id, "When you reach your destination send me the new location as an answer to this message or use /cancel to cancel the current command");
 			}
 		}
 	}
@@ -124,10 +135,13 @@ public class BiciSocialeBot extends TelegramLongPollingBot {
 		return "577331603:AAHLutNZ7Brr98TaX4LjlagRULigAq4Vhzw";
 	}
 	
-	public String sendReplyMarkup(long id, Location location, String button, String callbackData) {
-		List<List<InlineKeyboardButton>> keyboard = Arrays.asList(Arrays.asList(new InlineKeyboardButton().setText(button).setCallbackData(callbackData)));
+	public String sendReplyMarkup(long chat_id, Location location, String message, String callbackData) {
 		InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
-		markup.setKeyboard(keyboard);
+		List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
+		List<InlineKeyboardButton> rowInline = new ArrayList<>();
+		rowInline.add(new InlineKeyboardButton().setText(message).setCallbackData(callbackData));
+		rowsInline.add(rowInline);
+		markup.setKeyboard(rowsInline);
 		
 		SendLocation s;
 		
@@ -138,10 +152,11 @@ public class BiciSocialeBot extends TelegramLongPollingBot {
 			s.setLatitude(location.getLatitude());
 			s.setLongitude(location.getLongitude());
 		}
-		s.setChatId(id).setReplyMarkup(markup);
+		
+		s.setChatId(chat_id).setReplyMarkup(markup);
 		
 		try {
-			execute(s); // Sending our message object to user
+			execute(s);
 		} catch (TelegramApiException e) {
 			e.printStackTrace();
 		}
@@ -154,30 +169,41 @@ public class BiciSocialeBot extends TelegramLongPollingBot {
 		s.setText(message);
 		
 		try {
-			execute(s); // Sending our message object to user
+			execute(s);
 		} catch (TelegramApiException e) {
 			e.printStackTrace();
 		}
 	}
 	
-	public void sendMessage(long id, String message) {
-		SendMessage s = new SendMessage() // Create a message object object
-				.setChatId(id).setText(message);
+	public void sendMessage(long chat_id, String message) {
+		SendMessage s = new SendMessage()
+				.setChatId(chat_id).setText(message);
 		
 		try {
-			execute(s); // Sending our message object to user
+			execute(s);
 		} catch (TelegramApiException e) {
 			e.printStackTrace();
 		}
 	}
 	
-	public void sendLocation(long id, Location location) {
-		SendLocation s = new SendLocation().setChatId(id);
+	public void editMessage(long chat_id, int message_id, String message) {
+		EditMessageText s = new EditMessageText()
+				.setChatId(chat_id).setMessageId(message_id).setText(message);
+		
+		try {
+			execute(s);
+		} catch (TelegramApiException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void sendLocation(long chat_id, Location location) {
+		SendLocation s = new SendLocation().setChatId(chat_id);
 		s.setLatitude(location.getLatitude());
 		s.setLongitude(location.getLongitude());
 		
 		try {
-			execute(s); // Sending our message object to user
+			execute(s);
 		} catch (TelegramApiException e) {
 			e.printStackTrace();
 		}
