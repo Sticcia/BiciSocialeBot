@@ -3,43 +3,31 @@ import org.telegram.telegrambots.api.methods.send.SendLocation;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
 import org.telegram.telegrambots.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.api.objects.CallbackQuery;
-import org.telegram.telegrambots.api.objects.Location;
 import org.telegram.telegrambots.api.objects.Update;
 import org.telegram.telegrambots.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 
 public class BiciSocialeBot extends TelegramLongPollingBot {
 	private BikeLocation bikeLocation;
 	private String bikeCombination;
 	private boolean taken;
-	private String file;
+	private Logger logger;
 	
 	public BiciSocialeBot(String logFile, String combination) {
-		this.file = logFile;
+		this.logger = new Logger(logFile);
 		this.bikeCombination = combination;
-		this.bikeLocation = this.retrieveBikeLocation();
+		this.bikeLocation = logger.retrieveBikeLocation();
 	}
 	
 	@Override
 	public void onUpdateReceived(Update update) {
 		// Check if the update has a message
 		if (update.hasMessage()) {
-			String user_first_name = update.getMessage().getChat().getFirstName();
-			String user_last_name = update.getMessage().getChat().getLastName();
 			String user_username = update.getMessage().getChat().getUserName();
 			long user_id = update.getMessage().getChat().getId();
 			long chat_id = update.getMessage().getChatId();
@@ -97,19 +85,17 @@ public class BiciSocialeBot extends TelegramLongPollingBot {
 					break;
 				}
 				
-				log(user_first_name, user_last_name, Long.toString(user_id), message_text, answer);
+				logger.printMessage(user_username, Long.toString(user_id), message_text, answer);
 				
 			} else if (update.getMessage().hasLocation()) {
 				this.bikeLocation.setLatitude(update.getMessage().getLocation().getLatitude());
 				this.bikeLocation.setLongitude(update.getMessage().getLocation().getLongitude());
-				message_text = "Lat: " + bikeLocation.getLatitude() + "\nLon: "
-						+ bikeLocation.getLongitude();
-				this.logLocation(message_text);
+				logger.logLocationToFile(bikeLocation);
 				
 				answer = "Thanks for sending me the new location.\nUse /find to find the bike at any moment";
 				this.sendMessage(chat_id, answer);
 				
-				log(user_first_name, user_last_name, Long.toString(user_id), message_text, answer);
+				logger.printLocation(user_username, Long.toString(user_id), bikeLocation, answer);
 			}
 		} else if (update.hasCallbackQuery()) {
 			CallbackQuery query = update.getCallbackQuery();
@@ -199,58 +185,5 @@ public class BiciSocialeBot extends TelegramLongPollingBot {
 	public BikeLocation getBikeLocation() {
 		return this.bikeLocation;
 	}
-	
-	public BikeLocation retrieveBikeLocation() {
-		String currentLine;
-		float lat = 0, lon = 0;
-		BikeLocation location = new BikeLocation();
-		
-		try {
-			BufferedReader in = new BufferedReader(new FileReader(this.file));
-			while ((currentLine = in.readLine()) != null) {
-				System.out.println(currentLine);
-				if (currentLine.contains("Lat")) {
-					lat = Float.parseFloat(currentLine.substring(5));
-				} else if (currentLine.contains("Lon")) {
-					lon = Float.parseFloat(currentLine.substring(5));
-				}
-			}
-			in.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-		location.setLatitude(lat);
-		location.setLongitude(lon);
-		
-		return location;
-	}
-	
-	public void logLocation(String location) {
-		String str = "\n----------------------------\n";
-		DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-		Date date = new Date();
-		str += dateFormat.format(date) + "\n" + location;
-		
-		try {
-			BufferedWriter out = new BufferedWriter(new FileWriter(this.file, true));
-			out.append(str);
-			out.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-	}
-
-	private void log(String first_name, String last_name, String user_id, String txt, String bot_answer) {
-		String str = "\n----------------------------\n";
-		
-		DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-		Date date = new Date();
-		
-		str += dateFormat.format(date) + "\nMessage from " + first_name + " " + last_name + ". (id = " + user_id
-				+ ") \n Text - " + txt + "\nBot answer: \n Text - " + bot_answer;
-
-		System.out.println(str);
-	}
 }
+	
