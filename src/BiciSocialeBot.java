@@ -29,9 +29,9 @@ public class BiciSocialeBot extends TelegramLongPollingBot {
 	private String file;
 	
 	public BiciSocialeBot(String logFile, String combination) {
-		this.bikeLocation = new BikeLocation();
 		this.file = logFile;
 		this.bikeCombination = combination;
+		this.bikeLocation = this.retrieveBikeLocation();
 	}
 	
 	@Override
@@ -144,10 +144,6 @@ public class BiciSocialeBot extends TelegramLongPollingBot {
 		rowInline.add(new InlineKeyboardButton().setText(message).setCallbackData(callbackData));
 		rowsInline.add(rowInline);
 		markup.setKeyboard(rowsInline);
-		
-		if (location == null) {
-			location = this.retrieveBikeLocation();
-		}
 		
 		this.sendLocation(chat_id, location);
 		
