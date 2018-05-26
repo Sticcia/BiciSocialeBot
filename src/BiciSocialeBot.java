@@ -23,12 +23,13 @@ import java.util.Date;
 import java.util.List;
 
 public class BiciSocialeBot extends TelegramLongPollingBot {
-	private Location bikeLocation;
+	private BikeLocation bikeLocation;
 	private String bikeCombination;
 	private boolean taken;
 	private String file;
 	
 	public BiciSocialeBot(String logFile, String combination) {
+		this.bikeLocation = new BikeLocation();
 		this.file = logFile;
 		this.bikeCombination = combination;
 	}
@@ -60,7 +61,7 @@ public class BiciSocialeBot extends TelegramLongPollingBot {
 							+ "\nIf you move the bike please use /update, then send the location as an answer to the message."
 							+ "\nTo find the bike use /find."
 							+ "\nTo get the bikes' lock combination use /combination."
-							+ "\nUse /cancel at any moment to cancel the current command";
+							+ "\nUse /cancel at any moment to cancel the current action";
 					this.sendMessage(chat_id, answer);
 					break;
 				case "/update":
@@ -99,9 +100,10 @@ public class BiciSocialeBot extends TelegramLongPollingBot {
 				log(user_first_name, user_last_name, Long.toString(user_id), message_text, answer);
 				
 			} else if (update.getMessage().hasLocation()) {
-				this.bikeLocation = update.getMessage().getLocation();
-				message_text = "Lat: " + bikeLocation.getLatitude().toString() + "\nLon: "
-						+ bikeLocation.getLongitude().toString();
+				this.bikeLocation.setLatitude(update.getMessage().getLocation().getLatitude());
+				this.bikeLocation.setLongitude(update.getMessage().getLocation().getLongitude());
+				message_text = "Lat: " + bikeLocation.getLatitude() + "\nLon: "
+						+ bikeLocation.getLongitude();
 				this.logLocation(message_text);
 				
 				answer = "Thanks for sending me the new location.\nUse /find to find the bike at any moment";
@@ -135,7 +137,7 @@ public class BiciSocialeBot extends TelegramLongPollingBot {
 		return "577331603:AAHLutNZ7Brr98TaX4LjlagRULigAq4Vhzw";
 	}
 	
-	public String sendReplyMarkup(long chat_id, Location location, String message, String callbackData) {
+	public String sendReplyMarkup(long chat_id, BikeLocation location, String message, String callbackData) {
 		InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
 		List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
 		List<InlineKeyboardButton> rowInline = new ArrayList<>();
@@ -143,24 +145,13 @@ public class BiciSocialeBot extends TelegramLongPollingBot {
 		rowsInline.add(rowInline);
 		markup.setKeyboard(rowsInline);
 		
-		SendLocation s;
-		
 		if (location == null) {
-			s = this.retrieveBikeLocation();
-		} else {
-			s = new SendLocation();
-			s.setLatitude(location.getLatitude());
-			s.setLongitude(location.getLongitude());
+			location = this.retrieveBikeLocation();
 		}
 		
-		s.setChatId(chat_id).setReplyMarkup(markup);
+		this.sendLocation(chat_id, location);
 		
-		try {
-			execute(s);
-		} catch (TelegramApiException e) {
-			e.printStackTrace();
-		}
-		return "Lat: " + s.getLatitude().toString() + " Long: " + s.getLongitude().toString();
+		return "Lat: " + location.getLatitude() + " Long: " + location.getLongitude();
 	}
 	
 	public void answerCallback(String id, String message) {
@@ -197,7 +188,7 @@ public class BiciSocialeBot extends TelegramLongPollingBot {
 		}
 	}
 	
-	public void sendLocation(long chat_id, Location location) {
+	public void sendLocation(long chat_id, BikeLocation location) {
 		SendLocation s = new SendLocation().setChatId(chat_id);
 		s.setLatitude(location.getLatitude());
 		s.setLongitude(location.getLongitude());
@@ -209,14 +200,14 @@ public class BiciSocialeBot extends TelegramLongPollingBot {
 		}
 	}
 	
-	public Location getBikeLocation() {
+	public BikeLocation getBikeLocation() {
 		return this.bikeLocation;
 	}
 	
-	public SendLocation retrieveBikeLocation() {
+	public BikeLocation retrieveBikeLocation() {
 		String currentLine;
 		float lat = 0, lon = 0;
-		SendLocation newLocation = new SendLocation();
+		BikeLocation location = new BikeLocation();
 		
 		try {
 			BufferedReader in = new BufferedReader(new FileReader(this.file));
@@ -233,10 +224,10 @@ public class BiciSocialeBot extends TelegramLongPollingBot {
 			e.printStackTrace();
 		}
 		
-		newLocation.setLatitude(lat);
-		newLocation.setLongitude(lon);
+		location.setLatitude(lat);
+		location.setLongitude(lon);
 		
-		return newLocation;
+		return location;
 	}
 	
 	public void logLocation(String location) {
