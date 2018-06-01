@@ -1,3 +1,5 @@
+package BiciSocialeBot;
+
 import org.telegram.telegrambots.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.api.methods.send.SendLocation;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
@@ -103,12 +105,15 @@ public class BiciSocialeBot extends TelegramLongPollingBot {
 			CallbackQuery query = update.getCallbackQuery();
 			long chat_id = query.getMessage().getChatId();
 			long message_id = query.getMessage().getMessageId();
-			String username = query.getFrom().getUserName();
+			String name = query.getFrom().getUserName();
+			if (name == null) {
+				name = query.getFrom().getFirstName();
+			}
 			
 			if (query.getData().equals("take")) {
 				this.taken = true;
 				this.answerCallback(query.getId(), "Please don't wreck the bike!");
-				InlineKeyboardMarkup markup = this.setReplyMarkup(chat_id, "Bike taken from " + username, "sorry");
+				InlineKeyboardMarkup markup = this.setReplyMarkup(chat_id, "Bike taken from " + name, "sorry");
 				this.editMessageMarkup(chat_id, (int) (long) message_id, markup);
 			} else if (query.getData().equals("sorry")) {
 				this.answerCallback(query.getId(), "I'm sorry but the bike was already taken.");

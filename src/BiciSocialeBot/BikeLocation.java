@@ -1,3 +1,5 @@
+package BiciSocialeBot;
+
 public class BikeLocation {
 	
 	private Float latitude;
