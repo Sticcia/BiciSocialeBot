@@ -13,8 +13,10 @@ import org.telegram.telegrambots.exceptions.TelegramApiException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class BiciSocialeBot extends TelegramLongPollingBot {
+	private final float IDLEO = 293610436;
 	private BikeLocation bikeLocation;
 	private String bikeCombination;
 	private boolean taken;
@@ -32,6 +34,7 @@ public class BiciSocialeBot extends TelegramLongPollingBot {
 		if (update.hasMessage()) {
 			String user_username = update.getMessage().getChat().getUserName();
 			long user_id = update.getMessage().getChat().getId();
+			boolean isLeo = user_id == IDLEO;
 			long chat_id = update.getMessage().getChatId();
 			String message_text;
 			String answer;
@@ -61,16 +64,36 @@ public class BiciSocialeBot extends TelegramLongPollingBot {
 					this.sendMessage(chat_id, answer);
 					break;
 				case "/combination":
+					if (isLeo) {
+						answer = "The bikes' current lock combination is:\n" + "Fuck off Leo, fix your bike!";
+					} else {
+						answer = "The bikes' current lock combination is:\n" + this.bikeCombination;
+					}
+					this.sendMessage(chat_id, answer);
+					break;
 				case "/combination@BiciSocialeBot":
-					answer = "The bikes' current lock combination is:\n" + this.bikeCombination;
+					answer = "This command only works in private chats, write to @BiciSocialeBot.";
 					this.sendMessage(chat_id, answer);
 					break;
 				case "/find":
 				case "/find@BiciSocialeBot":
 					if (!this.taken) {
-						answer = "Lat: " + bikeLocation.getLatitude() + " Long: " + bikeLocation.getLongitude();
-						InlineKeyboardMarkup markup = this.setReplyMarkup(chat_id, "Take bike", "take");
-						this.sendLocation(chat_id, bikeLocation, markup);
+						if (isLeo) {
+							Random r = new Random();
+							BikeLocation newBikeLocation = new BikeLocation();
+							newBikeLocation.setLatitude((r.nextFloat() * -180) + 90);
+							newBikeLocation.setLongitude((r.nextFloat() * -360) + 180);
+							answer = "Lat: " + newBikeLocation.getLatitude() + " Long: " + newBikeLocation.getLongitude();
+							InlineKeyboardMarkup markup = this.setReplyMarkup(chat_id, "Take bike", "take");
+							this.sendLocation(chat_id, newBikeLocation, markup);
+							
+							answer = "Leo, you son of a bitch, remember that this is not your fucking bike, with lots of love, fuck off!";
+							this.sendMessage(chat_id, answer);
+						} else {
+							answer = "Lat: " + bikeLocation.getLatitude() + " Long: " + bikeLocation.getLongitude();
+							InlineKeyboardMarkup markup = this.setReplyMarkup(chat_id, "Take bike", "take");
+							this.sendLocation(chat_id, bikeLocation, markup);
+						}
 					} else {
 						answer = "Bike is already in use";
 						this.sendMessage(chat_id, answer);
