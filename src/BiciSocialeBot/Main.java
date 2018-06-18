@@ -14,7 +14,7 @@ public class Main {
 
 		// Register our bot
 		try {
-			botsApi.registerBot(new BiciSocialeBot("log.txt", "5518"));
+			botsApi.registerBot(new BiciSocialeBot("log.txt", "3818"));
 		} catch (TelegramApiException e) {
 			e.printStackTrace();
 		}
